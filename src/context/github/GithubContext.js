@@ -6,19 +6,33 @@ const GithubContext = createContext();
 export const GithubProvider = ({children})=>{
     const initialState = {
         users:[],
+        user:{},
         loading:false,
     }
     const [state,dispatch] = useReducer(githubReducer,initialState); 
+    
+    //Getting Single User
+    const getUser = async (login)=>{
+        setLoading();
+        const response = await fetch(`https://api.github.com/users/${login}`);
+        if(response.status===404){
+            window.location = '/notfound';
+        }
+        else{
+            const data = await response.json();
+            dispatch({
+                type:'GET_USER',
+                payload:data,
+            })
+        }
+    }
+    //Getting multiple users
     const searchUsers = async (text)=>{
         setLoading();
         const params = new URLSearchParams({
             q:text,
         })
-        const response = await fetch(`https://api.github.com/search/users?${params}`,{
-            headers: {
-                Authorization: `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`
-            }}
-            );
+        const response = await fetch(`https://api.github.com/search/users?${params}`);
         const {items} = await response.json();
         dispatch({
             type:'GET_USERS',
@@ -37,8 +51,10 @@ export const GithubProvider = ({children})=>{
         value={{
             users:state.users,
             loading:state.loading,
+            user:state.user,
             searchUsers,
             clearUsers,
+            getUser,
         }}
     >
         {children}
